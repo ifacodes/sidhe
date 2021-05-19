@@ -1,3 +1,5 @@
+mod graphics;
+
 use futures::executor::block_on;
 use winit::{
     event::*,
@@ -13,6 +15,8 @@ struct State {
     swap_chain: wgpu::SwapChain,
     size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
+    render_pipeline: wgpu::RenderPipeline,
+    acc: u32,
 }
 
 impl State {
@@ -41,7 +45,7 @@ impl State {
             .unwrap();
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: adapter.get_swap_chain_preferred_format(&surface),
+            format: adapter.get_swap_chain_preferred_format(&surface).unwrap(),
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
@@ -49,6 +53,54 @@ impl State {
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
         let clear_color = wgpu::Color::BLACK;
+
+        let vs_module = device.create_shader_module(&wgpu::include_spirv!("shader.vert.spv"));
+        let fs_module = device.create_shader_module(&wgpu::include_spirv!("shader.frag.spv"));
+
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            });
+
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &vs_module,
+                entry_point: "main",
+                buffers: &[],
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &fs_module,
+                entry_point: "main",
+                targets: &[wgpu::ColorTargetState {
+                    format: sc_desc.format,
+                    blend: Some(wgpu::BlendState {
+                        color: wgpu::BlendComponent::REPLACE,
+                        alpha: wgpu::BlendComponent::REPLACE,
+                    }),
+                    write_mask: wgpu::ColorWrite::ALL,
+                }],
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                polygon_mode: wgpu::PolygonMode::Fill,
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+        });
+
+        let acc = 0;
 
         Self {
             surface,
@@ -58,6 +110,8 @@ impl State {
             swap_chain,
             size,
             clear_color,
+            render_pipeline,
+            acc,
         }
     }
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -77,10 +131,27 @@ impl State {
                 };
                 true
             }
+            WindowEvent::KeyboardInput { input, .. } => match input {
+                KeyboardInput {
+                    state: ElementState::Pressed,
+                    virtual_keycode: Some(VirtualKeyCode::Space),
+                    ..
+                } => {
+                    self.acc = 0;
+                    self.clear_color = wgpu::Color::RED;
+                    true
+                }
+                _ => false,
+            },
             _ => false,
         }
     }
-    fn update(&mut self) {}
+    fn update(&mut self) {
+        self.acc = self.acc + 1;
+        if self.acc > 100 {
+            self.clear_color = wgpu::Color::GREEN;
+        }
+    }
     fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
         let frame = self.swap_chain.get_current_frame()?.output;
         let mut encoder = self
@@ -89,10 +160,10 @@ impl State {
                 label: Some("Render Encoder"),
             });
         {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
-                color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                    attachment: &frame.view,
+                color_attachments: &[wgpu::RenderPassColorAttachment {
+                    view: &frame.view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(self.clear_color),
@@ -101,6 +172,9 @@ impl State {
                 }],
                 depth_stencil_attachment: None,
             });
+            render_pass.set_pipeline(&self.render_pipeline);
+
+            render_pass.draw(0..3, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -116,18 +190,12 @@ fn main() {
     let mut state = block_on(State::new(&window));
 
     event_loop.run(move |event, _, control_flow| match event {
-        Event::RedrawRequested(_) => {
-            state.update();
-            match state.render() {
-                Ok(_) => {}
-                Err(wgpu::SwapChainError::Lost) => state.resize(state.size),
-                Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                Err(e) => eprintln!("{:?}", e),
-            }
-        }
-        Event::MainEventsCleared => {
-            window.request_redraw();
-        }
+        Event::RedrawRequested(_) => match state.render() {
+            Ok(_) => {}
+            Err(wgpu::SwapChainError::Lost) => state.resize(state.size),
+            Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+            Err(e) => eprintln!("{:?}", e),
+        },
         Event::WindowEvent {
             ref event,
             window_id,
@@ -153,6 +221,32 @@ fn main() {
                 }
             }
         }
+        Event::MainEventsCleared => {
+            state.update();
+            window.request_redraw();
+        }
         _ => {}
+    });
+}
+
+// this is my target for a main fn loop hopefully!
+#[allow(dead_code)]
+fn simplified_main() {
+    env_logger::init();
+    let _eventloop = EventLoop::new();
+    let _window = WindowBuilder::new().build(&_eventloop).unwrap();
+
+    // a function to init wgpu and the graphics side of things here and hook them in?
+    // block on due to the wgpu types that require async to create
+    // let mut something?(s)? = block_on(Graphics::init(&window));
+
+    _eventloop.run(move |event, _, control_flow| {
+        // compute delta time
+        // accumulator += delta time
+        // lock maybe?
+        // handle inputs
+        match event {
+            _ => {}
+        }
     });
 }
