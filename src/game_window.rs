@@ -6,7 +6,6 @@ use winit::window::WindowBuilder;
 pub struct GameWindow {
     window: winit::window::Window,
     event_loop: Option<EventLoop<()>>,
-    window_size: winit::dpi::PhysicalSize<u32>,
 }
 
 impl GameWindow {
@@ -16,13 +15,12 @@ impl GameWindow {
             .with_title(title)
             .build(&event_loop)
             .unwrap();
-        let window_size = window.inner_size();
         let event_loop = Some(event_loop);
-        Self {
-            window,
-            event_loop,
-            window_size,
-        }
+        Self { window, event_loop }
+    }
+
+    pub fn window(&self) -> &winit::window::Window {
+        &self.window
     }
 
     pub fn run<F>(mut self, mut app: app::App, mut game_loop: F)
@@ -45,20 +43,18 @@ impl GameWindow {
                         WindowEvent::CloseRequested => {
                             *controlflow = ControlFlow::Exit;
                         }
-                        WindowEvent::Resized(physical_size) => {
-                            self.window_size = *physical_size;
+                        WindowEvent::Resized(_physical_size) => {
+                            // pass to graphics state
+                            // self.window_size = *physical_size;
                         }
-                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            self.window_size = **new_inner_size;
+                        WindowEvent::ScaleFactorChanged { .. } => {
+                            // pass to graphics state
+                            // self.window_size = **new_inner_size;
                         }
                         _ => {}
                     },
                     _ => {}
                 }
             })
-    }
-
-    pub fn size(&self) -> winit::dpi::PhysicalSize<u32> {
-        self.window_size
     }
 }

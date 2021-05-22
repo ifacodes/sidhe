@@ -818,6 +818,7 @@ dependencies = [
  "futures",
  "glob",
  "image",
+ "raw-window-handle",
  "shaderc",
  "wgpu",
  "winit",
