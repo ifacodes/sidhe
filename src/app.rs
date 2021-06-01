@@ -1,10 +1,25 @@
-use crate::graphics::{graphic_system, GraphicSystem, Swapchain};
+use crate::graphics::{GraphicSystem, Swapchain, Vertex, VertexBuffer};
 use wgpu::SwapChainError;
 use winit::{dpi::PhysicalSize, window::Window};
 
+const VERTICES: &[Vertex] = &[
+    Vertex {
+        position: [0.0, 0.5, 0.0],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5, 0.0],
+        color: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [0.5, -0.5, 0.0],
+        color: [0.0, 0.0, 1.0],
+    },
+];
 pub struct App {
     graphic_system: GraphicSystem,
     swap_chain: Swapchain,
+    vertex_buffer: VertexBuffer,
 }
 
 impl App {
@@ -12,9 +27,15 @@ impl App {
         let graphic_system = GraphicSystem::new(window).await.unwrap();
         let size = window.inner_size();
         let swap_chain = graphic_system.swap_chain(size);
+        let vertex_buffer = graphic_system.buffer(
+            "Vertex Buffer",
+            wgpu::BufferUsage::VERTEX,
+            bytemuck::cast_slice(VERTICES),
+        );
         Self {
             graphic_system,
             swap_chain,
+            vertex_buffer,
         }
     }
 
@@ -43,7 +64,7 @@ impl App {
         let vertex = wgpu::VertexState {
             module: &shader,
             entry_point: "main",
-            buffers: &[],
+            buffers: &[VertexBuffer::desc()],
         };
         let fragment = wgpu::FragmentState {
             module: &shader,
@@ -64,7 +85,7 @@ impl App {
             .pipeline(&pipeline_layout, vertex, fragment);
 
         {
-            let mut renderpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Main Render Pass"),
                 color_attachments: &[wgpu::RenderPassColorAttachment {
                     view: &frame.view,
@@ -82,8 +103,9 @@ impl App {
                 depth_stencil_attachment: None,
             });
 
-            renderpass.set_pipeline(&render_pipeline.pipeline);
-            renderpass.draw(0..3, 0..1);
+            render_pass.set_pipeline(&render_pipeline.pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.draw(0..VERTICES.len() as u32, 0..1);
         }
 
         self.graphic_system

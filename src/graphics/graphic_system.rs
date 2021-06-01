@@ -1,7 +1,10 @@
 use anyhow::*;
 use raw_window_handle::HasRawWindowHandle;
 
-use crate::graphics::{Device, Pipeline, Swapchain};
+use crate::graphics::{Device, Pipeline, Swapchain, VertexBuffer};
+
+use super::Vertex;
+
 pub struct GraphicSystem {
     pub device: Device,
 }
@@ -66,6 +69,11 @@ impl GraphicSystem {
     }
     pub fn shader(&self) -> wgpu::ShaderModule {
         self.device.create_shader()
+    }
+    pub fn buffer(&self, name: &str, usage: wgpu::BufferUsage, contents: &[u8]) -> VertexBuffer {
+        VertexBuffer {
+            buffer: self.device.create_buffer(name, usage, contents),
+        }
     }
     pub fn submit<I>(&self, command_buffers: I)
     where

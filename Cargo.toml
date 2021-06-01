@@ -15,6 +15,7 @@ env_logger = "0.7"
 futures = "0.3"
 cgmath = "0.18"
 raw-window-handle = "0.3.3"
+bytemuck = {version = "1.5.1", features = ["derive"]}
 
 
 [build-dependencies]

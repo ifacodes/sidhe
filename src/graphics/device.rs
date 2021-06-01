@@ -1,4 +1,4 @@
-use wgpu::{BindGroupLayout, PushConstantRange};
+use wgpu::{util::DeviceExt, BindGroupLayout, PushConstantRange};
 
 use crate::graphics::{Pipeline, Swapchain};
 
@@ -56,6 +56,19 @@ impl Device {
                 label: Some("Shader Module"),
                 flags: wgpu::ShaderFlags::all(),
                 source: wgpu::ShaderSource::Wgsl(include_str!("../shader.wgsl").into()),
+            })
+    }
+    pub fn create_buffer(
+        &self,
+        name: &str,
+        usage: wgpu::BufferUsage,
+        contents: &[u8],
+    ) -> wgpu::Buffer {
+        self.device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some(name),
+                contents,
+                usage,
             })
     }
     pub fn submit<I>(&self, command_buffers: I)
