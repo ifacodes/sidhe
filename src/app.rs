@@ -1,5 +1,5 @@
-use crate::graphics::{GraphicSystem, Swapchain};
-use wgpu::{SwapChainDescriptor, SwapChainError};
+use crate::graphics::{graphic_system, GraphicSystem, Swapchain};
+use wgpu::SwapChainError;
 use winit::{dpi::PhysicalSize, window::Window};
 
 pub struct App {
@@ -39,8 +39,32 @@ impl App {
         let frame = self.swap_chain.get_current_frame().unwrap();
         let mut encoder = self.graphic_system.command_encoder();
 
+        let shader = self.graphic_system.shader();
+        let vertex = wgpu::VertexState {
+            module: &shader,
+            entry_point: "main",
+            buffers: &[],
+        };
+        let fragment = wgpu::FragmentState {
+            module: &shader,
+            entry_point: "main",
+            targets: &[wgpu::ColorTargetState {
+                format: self.swap_chain.format(),
+                blend: Some(wgpu::BlendState {
+                    color: wgpu::BlendComponent::REPLACE,
+                    alpha: wgpu::BlendComponent::REPLACE,
+                }),
+                write_mask: wgpu::ColorWrite::all(),
+            }],
+        };
+
+        let pipeline_layout = self.graphic_system.pipeline_layout(&[], &[]);
+        let render_pipeline = self
+            .graphic_system
+            .pipeline(&pipeline_layout, vertex, fragment);
+
         {
-            let _renderpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut renderpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Main Render Pass"),
                 color_attachments: &[wgpu::RenderPassColorAttachment {
                     view: &frame.view,
@@ -57,6 +81,9 @@ impl App {
                 }],
                 depth_stencil_attachment: None,
             });
+
+            renderpass.set_pipeline(&render_pipeline.pipeline);
+            renderpass.draw(0..3, 0..1);
         }
 
         self.graphic_system
