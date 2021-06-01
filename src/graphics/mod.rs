@@ -1,6 +1,37 @@
 use anyhow::*;
 use raw_window_handle::HasRawWindowHandle;
+use wgpu::{SwapChainError, SwapChainTexture};
 
+pub struct Pipeline {}
+
+pub struct Swapchain {
+    pub size: (u32, u32),
+    swap_chain: wgpu::SwapChain,
+}
+
+impl Swapchain {
+    #[inline]
+    pub fn size(&self) -> (u32, u32) {
+        self.size
+    }
+
+    pub fn get_current_frame(&self) -> Result<SwapChainTexture, SwapChainError> {
+        Ok(self.swap_chain.get_current_frame()?.output)
+    }
+
+    pub fn format(&self) -> wgpu::TextureFormat {
+        wgpu::TextureFormat::Rgba8UnormSrgb
+    }
+    fn descriptor(width: u32, height: u32) -> wgpu::SwapChainDescriptor {
+        wgpu::SwapChainDescriptor {
+            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            width,
+            height,
+            present_mode: wgpu::PresentMode::Fifo,
+        }
+    }
+}
 pub struct Device {
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -31,16 +62,8 @@ impl Device {
             })
     }
     pub fn create_swap_chain(&self, width: u32, height: u32) -> wgpu::SwapChain {
-        self.device.create_swap_chain(
-            &self.surface,
-            &wgpu::SwapChainDescriptor {
-                usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-                format: wgpu::TextureFormat::Bgra8UnormSrgb,
-                width,
-                height,
-                present_mode: wgpu::PresentMode::Fifo,
-            },
-        )
+        let desc = Swapchain::descriptor(width, height);
+        self.device.create_swap_chain(&self.surface, &desc)
     }
 }
 pub struct GraphicSystem {
@@ -75,5 +98,15 @@ impl GraphicSystem {
         Ok(Self {
             device: Device::new(device, queue, surface),
         })
+    }
+
+    pub fn swap_chain(&self, width: u32, height: u32) -> Swapchain {
+        Swapchain {
+            size: (width, height),
+            swap_chain: self.device.create_swap_chain(width, height),
+        }
+    }
+    pub fn command_encoder(&self) -> wgpu::CommandEncoder {
+        self.device.create_encoder()
     }
 }

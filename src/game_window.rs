@@ -43,11 +43,12 @@ impl GameWindow {
                         WindowEvent::CloseRequested => {
                             *controlflow = ControlFlow::Exit;
                         }
-                        WindowEvent::Resized(_physical_size) => {
-                            // pass to graphics state
+                        WindowEvent::Resized(physical_size) => {
+                            app.resize(*physical_size);
                             // self.window_size = *physical_size;
                         }
-                        WindowEvent::ScaleFactorChanged { .. } => {
+                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                            app.resize(**new_inner_size);
                             // pass to graphics state
                             // self.window_size = **new_inner_size;
                         }
