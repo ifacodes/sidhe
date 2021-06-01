@@ -25,7 +25,7 @@ impl GameWindow {
 
     pub fn run<F>(mut self, mut app: app::App, mut game_loop: F)
     where
-        F: 'static + FnMut(&mut app::App),
+        F: 'static + FnMut(&mut app::App, &mut ControlFlow),
     {
         self.event_loop
             .take()
@@ -34,7 +34,7 @@ impl GameWindow {
                 *controlflow = ControlFlow::Poll;
 
                 match event {
-                    Event::RedrawRequested(_) => game_loop(&mut app),
+                    Event::RedrawRequested(_) => game_loop(&mut app, controlflow),
                     Event::MainEventsCleared => self.window.request_redraw(),
                     Event::WindowEvent {
                         ref event,

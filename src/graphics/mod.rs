@@ -1,17 +1,18 @@
 use anyhow::*;
 use raw_window_handle::HasRawWindowHandle;
-use wgpu::{SwapChainError, SwapChainTexture};
+use wgpu::{CommandBuffer, SwapChainError, SwapChainTexture};
+use winit::dpi::PhysicalSize;
 
 pub struct Pipeline {}
 
 pub struct Swapchain {
-    pub size: (u32, u32),
+    pub size: PhysicalSize<u32>,
     swap_chain: wgpu::SwapChain,
 }
 
 impl Swapchain {
     #[inline]
-    pub fn size(&self) -> (u32, u32) {
+    pub fn size(&self) -> PhysicalSize<u32> {
         self.size
     }
 
@@ -65,6 +66,12 @@ impl Device {
         let desc = Swapchain::descriptor(width, height);
         self.device.create_swap_chain(&self.surface, &desc)
     }
+    pub fn submit<I>(&self, command_buffers: I)
+    where
+        I: IntoIterator<Item = CommandBuffer>,
+    {
+        self.queue.submit(command_buffers);
+    }
 }
 pub struct GraphicSystem {
     pub device: Device,
@@ -100,13 +107,20 @@ impl GraphicSystem {
         })
     }
 
-    pub fn swap_chain(&self, width: u32, height: u32) -> Swapchain {
+    pub fn swap_chain(&self, size: PhysicalSize<u32>) -> Swapchain {
         Swapchain {
-            size: (width, height),
-            swap_chain: self.device.create_swap_chain(width, height),
+            size,
+            swap_chain: self.device.create_swap_chain(size.width, size.height),
         }
     }
     pub fn command_encoder(&self) -> wgpu::CommandEncoder {
         self.device.create_encoder()
+    }
+
+    pub fn submit<I>(&self, command_buffers: I)
+    where
+        I: IntoIterator<Item = CommandBuffer>,
+    {
+        self.device.submit(command_buffers);
     }
 }
