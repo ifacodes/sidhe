@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use crate::graphics::{GraphicSystem, Swapchain, Vertex, VertexBuffer};
 use wgpu::SwapChainError;
 use winit::{dpi::PhysicalSize, window::Window};

@@ -67,7 +67,12 @@ impl GraphicSystem {
         push_constant_ranges: &[wgpu::PushConstantRange],
     ) -> wgpu::PipelineLayout {
         self.device
-            .create_pipeline_layout(bind_group_layouts, push_constant_ranges)
+            .wgpu_device()
+            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Pipeline Layout"),
+                bind_group_layouts,
+                push_constant_ranges,
+            })
     }
     pub fn pipeline(
         &self,
@@ -77,7 +82,7 @@ impl GraphicSystem {
     ) -> Pipeline {
         let desc = Pipeline::pipeline_descriptor(layout, vertex, fragment);
         Pipeline {
-            pipeline: self.device.create_pipeline(&desc),
+            pipeline: self.device.wgpu_device().create_render_pipeline(&desc),
         }
     }
     pub fn shader(&self) -> wgpu::ShaderModule {
