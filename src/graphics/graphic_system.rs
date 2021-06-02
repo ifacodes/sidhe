@@ -1,9 +1,22 @@
 use anyhow::*;
 use raw_window_handle::HasRawWindowHandle;
 
-use crate::graphics::{Device, Pipeline, Swapchain, VertexBuffer};
+use crate::graphics::{Device, Pipeline, Swapchain, Vertex, VertexBuffer};
 
-use super::Vertex;
+const QUAD: &[Vertex] = &[
+    Vertex {
+        position: [-0.5, 0.5, 0.0],
+        coord: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5, 0.0],
+        coord: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [0.0, -0.5, 0.0],
+        coord: [0.0, 1.0, 1.0],
+    },
+];
 
 pub struct GraphicSystem {
     pub device: Device,

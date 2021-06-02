@@ -5,6 +5,7 @@ pub struct Swapchain {
 
 impl Swapchain {
     #[inline]
+    #[allow(dead_code)]
     pub fn size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.size
     }

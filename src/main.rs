@@ -1,7 +1,6 @@
 mod app;
 mod game_window;
 mod graphics;
-mod vertex_buffer;
 
 use app::App;
 use futures::executor::block_on;

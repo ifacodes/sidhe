@@ -3,6 +3,7 @@ pub struct Pipeline {
 }
 
 impl<'a> Pipeline {
+    #[allow(dead_code)]
     pub fn layout_descriptor() -> &'a wgpu::PipelineLayoutDescriptor<'a> {
         &wgpu::PipelineLayoutDescriptor {
             label: Some("Pipeline Layout"),

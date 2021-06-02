@@ -6,7 +6,7 @@ use wgpu::BufferAddress;
 #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub color: [f32; 3],
+    pub coord: [f32; 3],
 }
 
 pub struct VertexBuffer {

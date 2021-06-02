@@ -1,25 +1,34 @@
+use std::borrow::Borrow;
+
 use crate::graphics::{GraphicSystem, Swapchain, Vertex, VertexBuffer};
 use wgpu::SwapChainError;
 use winit::{dpi::PhysicalSize, window::Window};
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [0.0, 0.5, 0.0],
-        color: [1.0, 0.0, 0.0],
+        position: [-0.5, 0.5, 0.0],
+        coord: [1.0, 0.0, 0.0],
     },
     Vertex {
         position: [-0.5, -0.5, 0.0],
-        color: [0.0, 1.0, 0.0],
+        coord: [0.0, 1.0, 0.0],
     },
     Vertex {
-        position: [0.5, -0.5, 0.0],
-        color: [0.0, 0.0, 1.0],
+        position: [0.25, -0.5, 0.0],
+        coord: [0.0, 0.0, 1.0],
+    },
+    Vertex {
+        position: [0.25, 0.5, 0.0],
+        coord: [0.0, 1.0, 1.0],
     },
 ];
+
+const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 pub struct App {
     graphic_system: GraphicSystem,
     swap_chain: Swapchain,
     vertex_buffer: VertexBuffer,
+    index_buffer: VertexBuffer,
 }
 
 impl App {
@@ -32,10 +41,16 @@ impl App {
             wgpu::BufferUsage::VERTEX,
             bytemuck::cast_slice(VERTICES),
         );
+        let index_buffer = graphic_system.buffer(
+            "Index Buffer",
+            wgpu::BufferUsage::INDEX,
+            bytemuck::cast_slice(INDICES),
+        );
         Self {
             graphic_system,
             swap_chain,
             vertex_buffer,
+            index_buffer,
         }
     }
 
@@ -44,10 +59,11 @@ impl App {
     }
 
     // TODO: This should eventually be in a InputSystem
+    #[allow(dead_code)]
     pub fn input(&mut self) -> bool {
         todo!()
     }
-
+    #[allow(dead_code)]
     pub fn update(&mut self) {
         todo!()
     }
@@ -105,7 +121,8 @@ impl App {
 
             render_pass.set_pipeline(&render_pipeline.pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..VERTICES.len() as u32, 0..1);
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
         }
 
         self.graphic_system
