@@ -9,10 +9,11 @@ pub struct GameWindow {
 }
 
 impl GameWindow {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, width: u32, height: u32) -> Self {
         let event_loop = EventLoop::new();
         let window = WindowBuilder::new()
             .with_title(title)
+            .with_inner_size(winit::dpi::PhysicalSize::new(width, height))
             .build(&event_loop)
             .unwrap();
         let event_loop = Some(event_loop);

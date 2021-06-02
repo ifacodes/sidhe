@@ -5,15 +5,20 @@ use wgpu::BufferAddress;
 #[repr(C)]
 #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    pub position: [f32; 3],
-    pub coord: [f32; 3],
+    pub position: [f32; 2],
+    pub coord: [f32; 2],
 }
 
-pub struct VertexBuffer {
+pub struct Buffer {
     pub buffer: wgpu::Buffer,
+    pub size: usize,
 }
 
-impl VertexBuffer {
+impl Buffer {
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
     pub fn slice<S>(&self, bounds: S) -> wgpu::BufferSlice
     where
         S: RangeBounds<BufferAddress>,
@@ -29,12 +34,12 @@ impl VertexBuffer {
                 wgpu::VertexAttribute {
                     offset: 0,
                     shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
+                    format: wgpu::VertexFormat::Float32x2,
                 },
                 wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    offset: std::mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
                     shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x3,
+                    format: wgpu::VertexFormat::Float32x2,
                 },
             ],
         }

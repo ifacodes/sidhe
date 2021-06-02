@@ -9,7 +9,7 @@ use winit::event_loop::ControlFlow;
 
 fn main() {
     env_logger::init();
-    let window = GameWindow::new("Test");
+    let window = GameWindow::new("Test", 800, 600);
     let app = block_on(App::new(window.window()));
 
     window.run(app, move |app, control_flow| {

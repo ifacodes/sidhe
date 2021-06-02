@@ -2,9 +2,7 @@ use anyhow::*;
 use std::num::NonZeroU32;
 
 use image::RgbaImage;
-use wgpu::{util::DeviceExt, BindGroupLayout, PushConstantRange};
-
-use crate::graphics::Swapchain;
+use wgpu::util::DeviceExt;
 
 use super::texture::Texture;
 
@@ -22,7 +20,9 @@ impl Device {
             surface,
         }
     }
-    #[allow(dead_code)]
+    pub fn wgpu_surface(&self) -> &wgpu::Surface {
+        &self.surface
+    }
     pub fn wgpu_device(&self) -> &wgpu::Device {
         &self.device
     }
@@ -36,10 +36,6 @@ impl Device {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Main Command Encoder"),
             })
-    }
-    pub fn create_swap_chain(&self, width: u32, height: u32) -> wgpu::SwapChain {
-        let desc = Swapchain::descriptor(width, height);
-        self.device.create_swap_chain(&self.surface, &desc)
     }
     pub fn create_shader(&self) -> wgpu::ShaderModule {
         self.device
@@ -63,6 +59,7 @@ impl Device {
             })
     }
 
+    #[allow(dead_code)]
     pub fn create_texture(
         &self,
         rgba: &RgbaImage,

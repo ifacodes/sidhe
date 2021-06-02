@@ -11,5 +11,5 @@ pub use self::{
     graphic_system::GraphicSystem,
     pipeline::Pipeline,
     swap_chain::Swapchain,
-    vertex::{Vertex, VertexBuffer},
+    vertex::{Buffer, Vertex},
 };

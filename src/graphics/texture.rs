@@ -10,6 +10,7 @@ pub struct Texture {
 }
 
 impl Texture {
+    #[allow(dead_code)]
     pub fn load(device: &Device, image: &image::DynamicImage, label: Option<&str>) -> Result<Self> {
         let rgba = image.as_rgba8().unwrap();
         let dimensions = image.dimensions();
